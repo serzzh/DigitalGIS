@@ -1,0 +1,98 @@
+version: '3.7'
+
+# https://docs.min.io/docs/deploy-minio-on-docker-compose.html
+x-minio-common: &minio-common
+  image: quay.io/minio/minio:RELEASE.2022-04-01T03-41-39Z
+  command: server --console-address ":9001" http://minio{1...2}/data{1...2} #http://minio{1...4}/data{1...2}
+  expose:
+    - "9000"
+    - "9001"
+    # environment:
+    # MINIO_ROOT_USER: minioadmin
+    # MINIO_ROOT_PASSWORD: minioadmin
+  healthcheck:
+    test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+    interval: 30s
+    timeout: 20s
+    retries: 3
+
+services:
+  web:
+    #   Создаем контейнер с нашим приложением из докерфайла
+    build:
+      context: ..
+      dockerfile: ./DigitalGIS/env/Dockerfile
+    #   Перезагружать контейнер при ошибках
+    restart: on-failure
+    #   Все пароли и ключи лучше хранить в .env-файле
+    env_file:
+      - prod.env
+    #   Порты для nginx
+    expose:
+      - 8000
+    ports:
+      - 8000:8000
+    #   Поднимать только после БД
+    depends_on:
+      - db
+    #   Советую делать волюм с кодом, тогда не придется
+    #   перебилдивать контейнер каждый раз
+    volumes:
+      - /Users/serzzh/IdeaProjects/DigitalGIS/DigitalGIS:/srv/html/app/
+    #   Запускаем сервер
+    command: bash -c "python manage.py runserver 0.0.0.0:8000"
+
+
+  db:
+    #   Используем официальные postgis-image
+    #build:
+      #context: ..
+      #dockerfile: ./DigitalGIS/env/db/Dockerfile
+    image: kartoza/postgis:latest
+    restart: on-failure
+    #   Насадил новую базу на старую дату
+    #   P.S. Всегда стоит делать волюм у базы, чтобы
+    #     не потерять все данные при перебилдивании
+    #   Для кастомной папки с данными задаем в prod.env
+    #     переменную POSTGRES_DATA=/var/lib/postgres/data/POSTGRES_data
+    volumes:
+      - /usr/local/var/postgres:/var/lib/postgres/data/POSTGRES_data
+    env_file:
+      - prod.env
+    ports:
+      - 6432:5432
+    expose:
+      - 5432
+  minio1:
+    <<: *minio-common
+    hostname: minio1
+    volumes:
+      - data1-1:/data1
+      - data1-2:/data2
+
+  minio2:
+    <<: *minio-common
+    hostname: minio2
+    volumes:
+      - data2-1:/data1
+      - data2-2:/data2
+
+  nginx:
+    image: nginx:1.19.2-alpine
+    hostname: nginx
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    depends_on:
+      - minio1
+      - minio2
+
+## By default this config uses default local driver,
+## For custom volumes replace with volume driver configuration.
+volumes:
+  data1-1:
+  data1-2:
+  data2-1:
+  data2-2:
