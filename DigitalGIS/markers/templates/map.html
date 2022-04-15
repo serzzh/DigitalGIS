@@ -7,6 +7,14 @@
     <link rel="stylesheet" type="text/css" href="{% static 'map.css' %}">
     <link rel="stylesheet" type="text/css" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css">
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+
+    <!--deps-->
+    <script src="https://unpkg.com/georaster-layer-for-leaflet/dist/georaster-layer-for-leaflet.min.js"></script>
+    <script src="https://unpkg.com/geotiff@1.0.0-beta.7/dist/geotiff.bundle.js"></script>
+    <script src="https://unpkg.com/plotty@0.4.4/dist/plotty.min.js"></script>
+    <script src="https://unpkg.com/georaster"></script>
+
+
 </head>
 <body>
     {{ masks|json_script:"markers-data" }}

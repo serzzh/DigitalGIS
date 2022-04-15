@@ -45,7 +45,7 @@ class DGSMinio(Minio):
 class DGSMasks(object):
 
 
-    conn_str = "postgresql://postgres:rbH%6lsr@digitalgis-db-1:5432/digitalgis"
+    conn_str = "postgresql://postgres:rbH%6lsr@digitalgis_db_1:5432/digitalgis"
     engine = create_engine(conn_str)
 
     def __init__(self, geojson_url):
@@ -63,31 +63,16 @@ class DGSMasks(object):
 
 def load_into_PostGIS(file):
 
-    '''
-    connection = psycopg2.connect(
-        host=os.getenv('POSTGRES_HOST'),
-        port=os.getenv('POSTGRES_PORT'),
-        dbname=os.getenv('POSTGRES_DB'),
-        user=os.getenv('POSTGRES_USER'),
-        password=os.getenv('POSTGRES_PASSWORD'),
-    )
-    '''
-
-    cmds = 'raster2POSTGRES_sql -s 3857 -C -F -Y -t 256x256 /srv/html/app/import/geo-znz.tif public.myrasters | psql' \
-          #'psql -U {} -d {} -h {} -p 5432'.format(user,dbname,host)
+    os.environ['PGPASSWORD'] = os.getenv('POSTGRES_PASSWORD')
+    os.environ['PGUSER'] = os.getenv('POSTGRES_USER')
+    os.environ['PGDATABASE'] = os.getenv('POSTGRES_DB')
+    os.environ['PGHOST'] = os.getenv('POSTGRES_HOST')
+    cmds = 'raster2pgsql -s 3857 -C -F -Y -t 256x256 /srv/html/app/import/geo-znz.tif public.myrasters | psql'
+           #'psql -U {} -d {} -h {} -p 5432'.format(os.getenv('POSTGRES_USER'), os.getenv('POSTGRES_DB'), os.getenv('POSTGRES_HOST'))
 
     subprocess.call(cmds, shell=True)
 
-    #cursor.execute(cmds)
-    #connection.commit()
 
-    '''
-    with open(file, 'rb') as f:
-        with connection: # To autocommit/rollback
-            with connection.cursor() as cursor:
-                print('test')
-                cursor.execute("INSERT INTO myrasters(rast) VALUES (ST_FromGDALRaster(%s))", (f.read(),))
-    '''
 def main():
     # Define storage
     client = DGSMinio(
@@ -114,11 +99,8 @@ def main():
     #masks = DGSMasks(geojson_url)
     #masks.to_postgis()
 
-    file = client.get_object(bucket_name, tif_name)
+    #file = client.get_object(bucket_name, tif_name)
     load_into_PostGIS('import/geo-znz.tif')
-
-    #raster2POSTGRES_sql
-
 
 if __name__ == "__main__":
     try:

@@ -17,10 +17,11 @@ RUN apt-get install -y gdal-bin libgdal-dev
 RUN apt-get install -y python3-gdal
 RUN apt-get install -y binutils libproj-dev
 #RUN apt-get install -y build-dep python-psycopg2
-RUN pip3 install django psycopg2-binary
-
+RUN pip3 install psycopg2-binary
+RUN pip3 install django
 RUN pip3 install rasterio geopandas minio # s3
 RUN pip3 install psycopg2 sqlalchemy geoalchemy2==0.10.2 # s3
+
 
 # Копируем все файлы приложения в рабочую директорию в контейнере
 COPY . /srv/html/app

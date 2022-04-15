@@ -45,10 +45,10 @@ services:
 
   db:
     #   Используем официальные postgis-image
-    #build:
-      #context: ..
-      #dockerfile: ./DigitalGIS/env/db/Dockerfile
-    image: kartoza/postgis:latest
+    build:
+      context: ..
+      dockerfile: ./DigitalGIS/env/db/Dockerfile
+    #image: kartoza/postgis:latest
     restart: on-failure
     #   Насадил новую базу на старую дату
     #   P.S. Всегда стоит делать волюм у базы, чтобы
@@ -56,7 +56,7 @@ services:
     #   Для кастомной папки с данными задаем в prod.env
     #     переменную POSTGRES_DATA=/var/lib/postgres/data/POSTGRES_data
     volumes:
-      - /usr/local/var/postgres:/var/lib/postgres/data/POSTGRES_data
+      - /usr/local/var/postgres:/var/lib/postgres/data/pgdata
     env_file:
       - prod.env
     ports:
